@@ -19,13 +19,13 @@ const Home = () => {
 
   // Mapping between node IDs and tank IDs for sensor data
   const getActualTankId = (nodeId) => {
-    const nodeToTankMapping = {
-      'Node 1': 'tank_001',
-      'Node 2': 'tank_002', // Add if needed
+    const mapping = {
+      'Node 1': 'NODE_001',
+      'Node 2': 'NODE_002', // Add if needed
       'string': '1', // Maps to ID "1" in sensor data
-      'tank_001': 'tank_001' // Direct mapping
+      'NODE_001': 'NODE_001' // Direct mapping
     };
-    return nodeToTankMapping[nodeId] || nodeId;
+    return mapping[nodeId] || nodeId;
   };
 
   // Get time range parameters based on selection
@@ -77,68 +77,74 @@ const Home = () => {
       // Map the selected node to actual tank_id used in sensor data
       const actualTankId = selectedNode ? getActualTankId(selectedNode) : null;
       const timeParams = getTimeRangeParams();
-      
-      let url = 'http://127.0.0.1:8000/api/v1/tank-sensor?page=1&size=50&sort_by=created_at&sort_order=desc';
-      
-      if (actualTankId) {
-        url += `&tank_id=${actualTankId}`;
-      }
-      
-      if (timeParams && selectedTimeRange !== 'all') {
-        url += `&from=${encodeURIComponent(timeParams.from)}&to=${encodeURIComponent(timeParams.to)}`;
-      }
-        
+
+      let url = "http://127.0.0.1:8000/sensor-data";
+
+
       const response = await axios.get(url, {
         headers: {
           'accept': 'application/json'
         }
       });
-      
-      const sensorData = response.data.data || [];
-      
+
+      const allSensorData = response.data || [];
+
+      const actualNodeId = getActualTankId(selectedNode);
+
+      const sensorData = allSensorData.filter(
+        (item) => item.node_id === actualNodeId
+      );
+
       // Check if data exists for the selected node
       if (sensorData.length > 0) {
         setHasDataForNode(true);
         setNodeDataMessage('');
         // Get the latest reading for current values
         const latest = sensorData[0];
-        
+
         // Get tank height for the selected node (default to 200cm if not found)
         const selectedNodeData = nodes.find(n => n.id === selectedNode);
         const tankHeight = selectedNodeData?.tank_height || 200;
-        
+
         // Convert water level cm to percentage using actual tank height
-        const waterLevelPercentage = Math.min(100, Math.round((latest.water_level_cm / tankHeight) * 100 * 10) / 10);
+        const waterLevelPercentage = Math.min(
+          100,
+          Math.round(((tankHeight - latest.distance) / tankHeight) * 100)
+        );
+
         setWaterLevel(waterLevelPercentage);
-        setTemperature(Math.round(latest.temperature_c * 10) / 10);
+        setTemperature(Math.round(latest.temperature * 10) / 10);
         setLastUpdated(new Date(latest.created_at));
-        
+
         // Process data for charts (reverse to show chronological order)
         const reversedData = [...sensorData].reverse();
-        
+
         const waterData = reversedData.map(item => {
-          const time = new Date(item.created_at).toLocaleTimeString('en-US', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
+          const time = new Date(item.created_at).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
           });
-          const percentage = Math.min(100, Math.round((item.water_level_cm / tankHeight) * 100 * 10) / 10);
-          
+          // const percentage = Math.min(100, Math.round((item.water_level_cm / tankHeight) * 100 * 10) / 10);
+          const percentage = Math.min(
+            100,
+            Math.round(((tankHeight - item.distance) / tankHeight) * 100)
+          );
           return {
             time: time,
             value: percentage,
-            raw_cm: item.water_level_cm
+            raw_cm: item.distance
           };
         });
 
         const tempData = reversedData.map(item => {
-          const time = new Date(item.created_at).toLocaleTimeString('en-US', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
+          const time = new Date(item.created_at).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
           });
-          
+
           return {
             time: time,
-            value: Math.round(item.temperature_c * 10) / 10
+            value: Math.round(item.temperature * 10) / 10
           };
         });
 
@@ -174,15 +180,15 @@ const Home = () => {
   const fetchNodes = async () => {
     try {
       const response = await axios.get(
-        'http://127.0.0.1:8000/api/v1/tank-sensorparameters',
+        'http://127.0.0.1:8000/tank-parameters',
         {
           headers: {
             'accept': 'application/json'
           }
         }
       );
-      
-      const nodesData = response.data.data || [];
+
+      const nodesData = response.data || [];
       // Transform the data to match our node structure
       const transformedNodes = nodesData.map(node => ({
         id: node.node_id,
@@ -193,9 +199,9 @@ const Home = () => {
         latitude: node.lat,
         longitude: node.long
       }));
-      
+
       setNodes(transformedNodes);
-      
+
       // Set first node as default if no node is selected
       if (transformedNodes.length > 0 && !selectedNode) {
         setSelectedNode(transformedNodes[0].id);
@@ -207,7 +213,7 @@ const Home = () => {
         { id: 'Node 1', name: 'Node 1', tank_height: 22, tank_length: 22, tank_width: 0.2 },
         { id: 'Node 2', name: 'Node 2', tank_height: 0.4, tank_length: 0.4, tank_width: 0.5 },
         { id: 'string', name: 'string', tank_height: 0, tank_length: 0, tank_width: 0 },
-        { id: 'tank_001', name: 'Tank 001', tank_height: 200, tank_length: 100, tank_width: 100 }
+        { id: 'NODE_001', name: 'Tank 001', tank_height: 200, tank_length: 100, tank_width: 100 }
       ];
       setNodes(sampleNodes);
       if (!selectedNode) {
@@ -221,7 +227,7 @@ const Home = () => {
     const nodeId = event.target.value;
     setSelectedNode(nodeId);
     setNodeDataMessage(''); // Clear previous messages
-    
+
     // Reset data state while loading
     if (nodeId) {
       setLoading(true);
@@ -234,7 +240,7 @@ const Home = () => {
   const handleTimeRangeChange = (event) => {
     const timeRange = event.target.value;
     setSelectedTimeRange(timeRange);
-    
+
     // Clear custom dates if not selecting custom
     if (timeRange !== 'custom') {
       setCustomFromDate('');
@@ -292,9 +298,9 @@ const Home = () => {
           <h2 className="page-title">Dashboard Overview</h2>
           <div className="node-selector">
             <label htmlFor="node-select" className="node-label">Tank:</label>
-            <select 
+            <select
               id="node-select"
-              value={selectedNode} 
+              value={selectedNode}
               onChange={handleNodeChange}
               className="node-dropdown"
             >
@@ -307,12 +313,12 @@ const Home = () => {
               ))}
             </select>
           </div>
-          
+
           <div className="time-range-selector">
             <label htmlFor="time-range-select" className="time-range-label">Time Range:</label>
-            <select 
+            <select
               id="time-range-select"
-              value={selectedTimeRange} 
+              value={selectedTimeRange}
               onChange={handleTimeRangeChange}
               className="time-range-dropdown"
             >
@@ -324,7 +330,7 @@ const Home = () => {
               <option value="custom">Custom Range</option>
             </select>
           </div>
-          
+
           {selectedTimeRange === 'custom' && (
             <div className="custom-date-range">
               <div className="date-input-group">
@@ -352,8 +358,8 @@ const Home = () => {
         </div>
         {lastUpdated && (
           <div className="last-updated">
-            Last updated: {lastUpdated.toLocaleTimeString('en-US', { 
-              hour: '2-digit', 
+            Last updated: {lastUpdated.toLocaleTimeString('en-US', {
+              hour: '2-digit',
               minute: '2-digit',
               second: '2-digit'
             })}
@@ -361,7 +367,7 @@ const Home = () => {
           </div>
         )}
       </div>
-      
+
       {/* Data Status Message */}
       {nodeDataMessage && (
         <div className={`data-status-message ${hasDataForNode ? 'success' : 'warning'}`}>
@@ -381,7 +387,7 @@ const Home = () => {
           <span>{nodeDataMessage}</span>
         </div>
       )}
-      
+
       {selectedNode && hasDataForNode && (
         <div className="selected-node-info">
           <strong>Showing data for node:</strong> {selectedNode}
@@ -391,11 +397,11 @@ const Home = () => {
           <span className="time-range-info">
             {' '}• Time Range: {
               selectedTimeRange === '1h' ? 'Last 1 Hour' :
-              selectedTimeRange === '6h' ? 'Last 6 Hours' :
-              selectedTimeRange === '24h' ? 'Last 24 Hours' :
-              selectedTimeRange === '7d' ? 'Last 7 Days' :
-              selectedTimeRange === 'all' ? 'All Time' :
-              selectedTimeRange === 'custom' ? 'Custom Range' : 'Last 24 Hours'
+                selectedTimeRange === '6h' ? 'Last 6 Hours' :
+                  selectedTimeRange === '24h' ? 'Last 24 Hours' :
+                    selectedTimeRange === '7d' ? 'Last 7 Days' :
+                      selectedTimeRange === 'all' ? 'All Time' :
+                        selectedTimeRange === 'custom' ? 'Custom Range' : 'Last 24 Hours'
             }
           </span>
           {nodes.find(n => n.id === selectedNode)?.tank_height && (
@@ -405,14 +411,14 @@ const Home = () => {
           )}
         </div>
       )}
-      
+
       {/* Cards Section */}
       <div className="cards-container">
         <div className="card water-level-card">
           <div className="card-header">
             <div className="card-icon water-icon">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/>
+                <path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z" />
               </svg>
             </div>
             <h3>Water Level</h3>
@@ -425,8 +431,8 @@ const Home = () => {
           </div>
           <div className="card-status">
             <span className={`status ${!hasDataForNode ? 'no-data' : waterLevel > 50 ? 'good' : 'warning'}`}>
-              {!hasDataForNode ? 'No Data' : 
-               waterLevel > 80 ? 'High' : waterLevel > 50 ? 'Normal' : waterLevel > 20 ? 'Low' : 'Critical'}
+              {!hasDataForNode ? 'No Data' :
+                waterLevel > 80 ? 'High' : waterLevel > 50 ? 'Normal' : waterLevel > 20 ? 'Low' : 'Critical'}
             </span>
           </div>
         </div>
@@ -435,7 +441,7 @@ const Home = () => {
           <div className="card-header">
             <div className="card-icon temp-icon">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M14 4v10.54a4 4 0 11-4 0V4a2 2 0 114 0z"/>
+                <path d="M14 4v10.54a4 4 0 11-4 0V4a2 2 0 114 0z" />
               </svg>
             </div>
             <h3>Temperature</h3>
@@ -449,7 +455,7 @@ const Home = () => {
           <div className="card-status">
             <span className={`status ${!hasDataForNode ? 'no-data' : temperature < 30 ? 'good' : 'warning'}`}>
               {!hasDataForNode ? 'No Data' :
-               temperature < 25 ? 'Normal' : temperature < 30 ? 'Warm' : 'Hot'}
+                temperature < 25 ? 'Normal' : temperature < 30 ? 'Warm' : 'Hot'}
             </span>
           </div>
         </div>
@@ -479,17 +485,17 @@ const Home = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="time" />
                 <YAxis domain={[0, 100]} />
-                <Tooltip 
+                <Tooltip
                   labelFormatter={(value) => `Time: ${value}`}
                   formatter={(value, name, props) => [
                     `${value}% (${props.payload.raw_cm}cm)`,
                     'Water Level'
                   ]}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="value" 
-                  stroke="#2196F3" 
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#2196F3"
                   strokeWidth="3"
                   dot={{ fill: '#2196F3', strokeWidth: 2, r: 4 }}
                 />
@@ -520,14 +526,14 @@ const Home = () => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="time" />
                 <YAxis domain={['dataMin - 2', 'dataMax + 2']} />
-                <Tooltip 
+                <Tooltip
                   labelFormatter={(value) => `Time: ${value}`}
                   formatter={(value) => [`${value}°C`, 'Temperature']}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="value" 
-                  stroke="#FF9800" 
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#FF9800"
                   strokeWidth="3"
                   dot={{ fill: '#FF9800', strokeWidth: 2, r: 4 }}
                 />
