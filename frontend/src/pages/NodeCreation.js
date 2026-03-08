@@ -121,7 +121,7 @@ const NodeCreation = () => {
                 value={formData.node_id}
                 onChange={handleChange}
                 required
-                placeholder="Enter unique node identifier"
+                placeholder="Enter unique node identifier (e.g., Node 1)"
               />
             </div>
 
