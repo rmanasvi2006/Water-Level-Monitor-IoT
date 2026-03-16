@@ -1,3 +1,4 @@
+# ==============================
 import os
 from dotenv import load_dotenv
 import requests
@@ -11,49 +12,45 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
 
 app = FastAPI()
 
-# Added CORS middleware
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # ==============================
 # DATABASE CONNECTION
 # ==============================
 
-
 def get_connection():
-    """
-    Get database connection using environment variables.
-    Falls back to local development settings if env vars not set.
-    """
-    return psycopg2.connect(
-        host=os.environ.get("DB_HOST", "localhost"),
-        port=os.environ.get("DB_PORT", "5432"),
-        database=os.environ.get("DB_NAME", "iot-test"),
-        user=os.environ.get("DB_USER", "postgres"),
-        password=os.environ.get("DB_PASSWORD", "postgres"),
-        sslmode=os.environ.get("DB_SSLMODE", "prefer")  # Use "require" for Aiven
+    conn = psycopg2.connect(
+        host="pg-20613e19-manasvirapolu-ada4.h.aivencloud.com",
+        port="16862",
+        database="defaultdb",
+        user="avnadmin",
+        password="AVNS_fqFo5npbreSM7-fHDj8",
+        sslmode="require"
     )
+    return conn
 
 
 # ==============================
 # CREATE TABLES
 # ==============================
+
 def create_tables():
 
     conn = get_connection()
     cur = conn.cursor()
 
-    # Sensor data table
     cur.execute("""
     CREATE TABLE IF NOT EXISTS sensor_data (
         id SERIAL PRIMARY KEY,
@@ -64,7 +61,6 @@ def create_tables():
     )
     """)
 
-    # Tank parameters table
     cur.execute("""
     CREATE TABLE IF NOT EXISTS tank_sensorparameters (
         id SERIAL PRIMARY KEY,
@@ -83,23 +79,19 @@ def create_tables():
 
 
 # ==============================
-# THINGSPEAK CONFIG
+# SENSOR CONFIG
 # ==============================
-REAL_DATA_WITH_CURRENT_TIME = False
-TEST_MODE = True
 
-# Node id of sensor
+TEST_MODE = True
 NODE_ID = "NODE_001"
 
-# ThingSpeak API
 url = "https://api.thingspeak.com/channels/3290444/feeds.json?api_key=AWP8F08WA7SLO5EQ&results=-1"
-
-last_created_at = None
 
 
 # ==============================
 # GENERATE TEST DATA
 # ==============================
+
 def generate_test_data():
 
     base_values = {
@@ -115,13 +107,12 @@ def generate_test_data():
 
 
 # ==============================
-# SENSOR DATA COLLECTOR
+# SENSOR COLLECTOR
 # ==============================
+
 def sensor_collector():
 
-    global last_created_at
-
-    print("Distance & Temperature Data Collector Started")
+    print("Sensor Data Collector Started")
 
     while True:
 
@@ -146,7 +137,7 @@ def sensor_collector():
                 temperature = float(feed["field2"])
                 created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-            print("NEW DATA:", distance, temperature, created_at)
+            print("NEW DATA:", distance, temperature)
 
             conn = get_connection()
             cur = conn.cursor()
@@ -156,7 +147,7 @@ def sensor_collector():
             (node_id, field1, field2, created_at)
             VALUES (%s,%s,%s,%s)
             """,
-                        (NODE_ID, distance, temperature, created_at))
+            (NODE_ID, distance, temperature, created_at))
 
             conn.commit()
 
@@ -166,7 +157,6 @@ def sensor_collector():
             print("Sensor data inserted")
 
         except Exception as e:
-
             print("Error:", e)
 
         time.sleep(20)
@@ -175,6 +165,7 @@ def sensor_collector():
 # ==============================
 # REQUEST MODEL
 # ==============================
+
 class TankParameters(BaseModel):
 
     node_id: str
@@ -186,8 +177,9 @@ class TankParameters(BaseModel):
 
 
 # ==============================
-# POST API
+# POST TANK PARAMETERS
 # ==============================
+
 @app.post("/tank-parameters")
 def create_tank_parameters(data: TankParameters):
 
@@ -200,14 +192,14 @@ def create_tank_parameters(data: TankParameters):
     VALUES (%s,%s,%s,%s,%s,%s)
     RETURNING id
     """,
-                (
-                    data.node_id,
-                    data.tank_height_cm,
-                    data.tank_length_cm,
-                    data.tank_width_cm,
-                    data.lat,
-                    data.long
-                ))
+    (
+        data.node_id,
+        data.tank_height_cm,
+        data.tank_length_cm,
+        data.tank_width_cm,
+        data.lat,
+        data.long
+    ))
 
     new_id = cur.fetchone()[0]
 
@@ -222,8 +214,9 @@ def create_tank_parameters(data: TankParameters):
 
 
 # ==============================
-# GET API
+# GET TANK PARAMETERS
 # ==============================
+
 @app.get("/tank-parameters")
 def get_tank_parameters():
 
@@ -254,38 +247,8 @@ def get_tank_parameters():
 
 
 # ==============================
-# GET SENSOR DATA API
+# SENSOR DATA API
 # ==============================
-@app.get("/sensor-data")
-def get_sensor_data():
-
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute("""
-    SELECT id,node_id,field1,field2,created_at
-    FROM sensor_data
-    ORDER BY id DESC
-    LIMIT 100
-    """)
-
-    rows = cur.fetchall()
-
-    cur.close()
-    conn.close()
-
-    result = []
-
-    for row in rows:
-        result.append({
-            "id": row[0],
-            "node_id": row[1],
-            "distance": row[2],
-            "temperature": row[3],
-            "created_at": row[4]
-        })
-
-    return result
 
 @app.get("/sensor-data")
 def get_sensor_data(node_id: str = None):
@@ -294,17 +257,22 @@ def get_sensor_data(node_id: str = None):
     cur = conn.cursor()
 
     if node_id:
+
         cur.execute("""
         SELECT id,node_id,field1,field2,created_at
         FROM sensor_data
         WHERE node_id = %s
         ORDER BY created_at DESC
+        LIMIT 100
         """, (node_id,))
+
     else:
+
         cur.execute("""
         SELECT id,node_id,field1,field2,created_at
         FROM sensor_data
         ORDER BY created_at DESC
+        LIMIT 100
         """)
 
     rows = cur.fetchall()
@@ -325,9 +293,37 @@ def get_sensor_data(node_id: str = None):
 
     return result
 
+
 # ==============================
-# START BACKGROUND COLLECTOR
+# PREDICTION API
 # ==============================
+
+@app.post("/api/v1/predict")
+def predict_water_activity(data: dict):
+
+    distance = float(data.get("distance", 0))
+    temperature = float(data.get("temperature", 0))
+
+    if distance < 30:
+        prediction = "shower"
+        confidence = 0.85
+    elif distance < 60:
+        prediction = "faucet"
+        confidence = 0.80
+    else:
+        prediction = "no_activity"
+        confidence = 0.90
+
+    return {
+        "prediction": prediction,
+        "confidence": confidence
+    }
+
+
+# ==============================
+# START BACKGROUND TASK
+# ==============================
+
 @app.on_event("startup")
 def start_background_tasks():
 
@@ -341,5 +337,6 @@ def start_background_tasks():
 # ==============================
 # MAIN
 # ==============================
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

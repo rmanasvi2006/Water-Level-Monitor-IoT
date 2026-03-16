@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar';
 import Home from './pages/Home';
 import NodeCreation from './pages/NodeCreation';
 import './App.css';
+import Prediction from './pages/Prediction';
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -22,6 +23,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/node-creation" element={<NodeCreation />} />
+            <Route path="/prediction" element={<Prediction />} />
           </Routes>
         </main>
       </div>
