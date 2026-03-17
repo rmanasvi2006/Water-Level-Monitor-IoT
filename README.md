@@ -42,7 +42,27 @@ A full-stack IoT application for monitoring water tank levels and temperature in
 └── ml_model/          # Machine learning notebooks and models
 ```
 
----
+<img width="1920" height="1080" alt="Screenshot (180)" src="https://github.com/user-attachments/assets/d485b5aa-4d5d-40ab-9c0e-5cdaa00e4223" />
+
+<img width="1920" height="1080" alt="Screenshot (184)" src="https://github.com/user-attachments/assets/78da3693-63ca-4575-ae35-961de8acb9c2" />
+
+<img width="1920" height="1080" alt="Screenshot (185)" src="https://github.com/user-attachments/assets/bf3d7145-99f8-419e-a484-5b8a43d04bfe" />
+
+<img width="1920" height="1080" alt="Screenshot (186)" src="https://github.com/user-attachments/assets/b425beda-99f9-44b2-b61c-d7ab3ba8c37f" />
+
+<img width="1920" height="1080" alt="Screenshot (187)" src="https://github.com/user-attachments/assets/a9ab9f73-3218-432a-b904-bfd503689c40" />
+
+<img width="1920" height="1080" alt="Screenshot (189)" src="https://github.com/user-attachments/assets/9b993ab2-b9e9-428d-b6a3-7256427a2092" />
+
+<img width="1920" height="1080" alt="Screenshot (201)" src="https://github.com/user-attachments/assets/b4c2aab5-359f-48a8-b522-a88e95af7a0b" />
+
+<img width="1920" height="1080" alt="Screenshot (204)" src="https://github.com/user-attachments/assets/6de63a73-190d-4a6b-9385-7ac47b0a9c72" />
+
+<img width="1920" height="1080" alt="Screenshot (207)" src="https://github.com/user-attachments/assets/9672de1e-d85c-4780-b017-d5eb64c5f36e" />
+
+<img width="1920" height="1080" alt="Screenshot (219)" src="https://github.com/user-attachments/assets/54b495e4-77ac-4f41-a09c-18b6d8015426" />
+
+<img width="1920" height="1080" alt="Screenshot (220)" src="https://github.com/user-attachments/assets/874075da-ed62-40f0-81a8-0a67f15c7d04" />
 
 ## Deployment Guide
 
@@ -421,24 +441,3 @@ The `ml_model/` directory contains Jupyter notebooks for water disaggregation an
 
 Saved models available:
 - CNN, GRU, LSTM models (trained and visualization versions)
-
----
-
-## API Documentation
-
-Once the backend is running, access interactive API documentation:
-
-- **Swagger UI**: `http://<backend-url>/docs`
-- **ReDoc**: `http://<backend-url>/redoc`
-
----
-
-## License
-
-This project is part of the College Research Affiliate Program.
-
----
-
-## Support
-
-For issues or questions, please open a GitHub issue in this repository.
