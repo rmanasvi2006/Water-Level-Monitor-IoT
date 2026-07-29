@@ -1,6 +1,6 @@
-# IoT Water Tank Monitoring System
+# # Water Level Monitoring & Prediction Platform
 
-A full-stack IoT application for monitoring water tank levels and temperature in real-time. The system includes a FastAPI backend, React frontend dashboard, and machine learning models for water disaggregation analysis.
+Water Level Monitoring & Prediction Platform is a full-stack web application that enables real-time monitoring, historical data management, and predictive analytics for IoT-based water systems. The platform combines a FastAPI backend, PostgreSQL cloud database, React dashboard, and machine learning models to collect, analyze, and visualize water level data through an interactive web interface.
 
 ## Project Overview
 
@@ -25,15 +25,17 @@ A full-stack IoT application for monitoring water tank levels and temperature in
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
+## Key Features
 
-## Features
-
-- **Real-time Monitoring**: Live water level and temperature readings
-- **Interactive Dashboard**: React-based UI with graphs and analytics
-- **Node Management**: Create and configure multiple sensor nodes
-- **ML Models**: CNN, LSTM, and GRU models for water disaggregation
-- **Cloud Deployment**: Scalable architecture with Aiven PostgreSQL and Render
-
+- Real-time water level and temperature monitoring
+- RESTful API built with FastAPI
+- React dashboard with interactive visualizations
+- Cloud-hosted PostgreSQL database using Aiven
+- Sensor node configuration and management
+- Machine learning models (CNN, LSTM, GRU) for water prediction and disaggregation analysis
+- Cloud deployment using Render and Vercel
+- Historical data storage and analytics
+- 
 ## Project Structure
 
 ```
@@ -41,6 +43,25 @@ A full-stack IoT application for monitoring water tank levels and temperature in
 ├── frontend/          # React dashboard application
 └── ml_model/          # Machine learning notebooks and models
 ```
+## Tech Stack
+
+### Backend
+- FastAPI
+- Python
+- PostgreSQL
+- Psycopg2
+
+### Frontend
+- React.js
+- JavaScript
+- HTML5
+- CSS3
+
+### Cloud & Deployment
+- Aiven PostgreSQL
+- Render
+- Vercel
+
 
 <img width="1920" height="1080" alt="Screenshot (180)" src="https://github.com/user-attachments/assets/d485b5aa-4d5d-40ab-9c0e-5cdaa00e4223" />
 
@@ -441,3 +462,13 @@ The `ml_model/` directory contains Jupyter notebooks for water disaggregation an
 
 Saved models available:
 - CNN, GRU, LSTM models (trained and visualization versions)
+
+ ## Results
+
+The platform successfully demonstrated:
+
+- End-to-end real-time IoT data collection and visualization
+- Cloud-based data storage and retrieval
+- REST API integration between frontend and backend
+- Interactive monitoring dashboard for live sensor data
+- Machine learning-based analysis for water monitoring applications 
